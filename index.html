@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10766/10766489.png">
+    <title>Monitoring Suhu dan Kelembaban</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(120deg, #1a2980, #26d0ce);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            animation: fadeIn 1s ease-in;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1200px;
+        }
+
+        .box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 300px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: 0.6s;
+        }
+
+        .box:hover::before {
+            transform: translateX(100%);
+        }
+
+        .box:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .box h2 {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .display {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .link {
+            margin-top: 40px;
+        }
+
+        .link a {
+            display: inline-block;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .link a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .box {
+                width: 100%;
+                max-width: 320px;
+            }
+
+            .display {
+                font-size: 3rem;
+            }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Monitoring Suhu dan Kelembaban</h1>
+        <p>Real-time environmental monitoring system</p>
+    </div>
+    
+    <div class="container">
+        <div class="box">
+            <i class="fas fa-temperature-high icon"></i>
+            <h2>Suhu</h2>
+            <div class="display">
+                <span id="temperature" class="loading">--</span>°C
+            </div>
+            <div class="status" id="tempStatus">Mengukur...</div>
+        </div>
+
+        <div class="box">
+            <i class="fas fa-tint icon"></i>
+            <h2>Kelembaban</h2>
+            <div class="display">
+                <span id="humidity" class="loading">--</span>%
+            </div>
+            <div class="status" id="humidStatus">Mengukur...</div>
+        </div>
+    </div>
+
+    <div class="link">
+        <a href="table.html">
+            <i class="fas fa-table"></i> Lihat Semua Data
+        </a>
+    </div>
+
+    <script>
+        function updateSensorData() {
+            fetch('https://xxffbxnsfkrfpvuctpde.supabase.co/rest/v1/tabeldht', {
+                headers: {
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4ZmZieG5zZmtyZnB2dWN0cGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE0NzAwMjUsImV4cCI6MjA0NzA0NjAyNX0.FHm25lrfwumgNAbCtIK58u_rCvyUrHfOKTFkxFXdlao',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4ZmZieG5zZmtyZnB2dWN0cGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE0NzAwMjUsImV4cCI6MjA0NzA0NjAyNX0.FHm25lrfwumgNAbCtIK58u_rCvyUrHfOKTFkxFXdlao'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                data.sort((a, b) => b.id - a.id);
+                const { suhu, kelembapan } = data[0];
+
+                // Update temperature
+                const tempElement = document.getElementById('temperature');
+                tempElement.textContent = suhu.toFixed(1);
+                tempElement.classList.remove('loading');
+                
+                // Update humidity
+                const humElement = document.getElementById('humidity');
+                humElement.textContent = kelembapan.toFixed(1);
+                humElement.classList.remove('loading');
+
+                // Update status messages
+                updateStatus('tempStatus', suhu);
+                updateStatus('humidStatus', kelembapan);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('temperature').textContent = '--';
+                document.getElementById('humidity').textContent = '--';
+                document.getElementById('tempStatus').textContent = 'Error koneksi';
+                document.getElementById('humidStatus').textContent = 'Error koneksi';
+            });
+        }
+
+        function updateStatus(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (elementId === 'tempStatus') {
+                if (value < 18) {
+                    element.textContent = 'Dingin';
+                    element.style.background = '#3498db';
+                } else if (value > 30) {
+                    element.textContent = 'Panas';
+                    element.style.background = '#e74c3c';
+                } else {
+                    element.textContent = 'Normal';
+                    element.style.background = '#2ecc71';
+                }
+            } else {
+                if (value < 30) {
+                    element.textContent = 'Kering';
+                    element.style.background = '#e74c3c';
+                } else if (value > 80) {
+                    element.textContent = 'Lembab';
+                    element.style.background = '#3498db';
+                } else {
+                    element.textContent = 'Normal';
+                    element.style.background = '#2ecc71';
+                }
+            }
+        }
+
+        setInterval(updateSensorData, 3000);
+        updateSensorData();
+    </script>
+</body>
+</html>
